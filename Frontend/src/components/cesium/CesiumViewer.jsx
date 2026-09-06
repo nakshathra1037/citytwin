@@ -1,15 +1,51 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import { useCity } from '../../context/CityContext';
 import { useTelemetry } from '../../context/TelemetryContext';
 import { StatusPill } from '../common/StatusPill';
-import { Activity, Droplets, Car, CloudRain, Shield, Navigation } from 'lucide-react';
+import { 
+  CloudRain, 
+  Car, 
+  Droplets, 
+  Shield, 
+  Navigation, 
+  Layers, 
+  Eye, 
+  Map as MapIcon 
+} from 'lucide-react';
 
 export const CesiumViewer = () => {
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const { selectedCity } = useCity();
   const { telemetry } = useTelemetry();
+  const [mapStyle, setMapStyle] = useState('street'); // 'street', 'satellite', 'dark'
+
+  // Helper to construct imagery layer based on style
+  const createImageryProvider = (style) => {
+    if (style === 'satellite') {
+      return new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        maximumLevel: 19,
+        credit: 'Esri, Maxar, Earthstar Geographics'
+      });
+    } else if (style === 'dark') {
+      return new Cesium.UrlTemplateImageryProvider({
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        subdomains: ['a', 'b', 'c', 'd'],
+        maximumLevel: 19,
+        credit: 'CartoDB'
+      });
+    } else {
+      // Default: CartoDB Voyager / OpenStreetMap raster tiles
+      return new Cesium.UrlTemplateImageryProvider({
+        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        subdomains: ['a', 'b', 'c', 'd'],
+        maximumLevel: 19,
+        credit: 'OpenStreetMap, CartoDB'
+      });
+    }
+  };
 
   useEffect(() => {
     if (!containerRef.current || viewerRef.current) return;
@@ -19,6 +55,9 @@ export const CesiumViewer = () => {
 
     let viewer;
     try {
+      const initialProvider = createImageryProvider('street');
+      const baseLayer = new Cesium.ImageryLayer(initialProvider);
+
       viewer = new Cesium.Viewer(containerRef.current, {
         animation: false,
         timeline: false,
@@ -30,14 +69,17 @@ export const CesiumViewer = () => {
         sceneModePicker: true,
         selectionIndicator: true,
         navigationHelpButton: false,
-        imageryProvider: new Cesium.OpenStreetMapImageryProvider({
-          url: 'https://tile.openstreetmap.org/'
-        })
+        baseLayer: baseLayer
       });
 
-      // Enable depth test for terrain/polygons
+      // Ensure imagery layer is actively rendered
+      if (viewer.imageryLayers.length === 0) {
+        viewer.imageryLayers.add(baseLayer);
+      }
+
+      // Enable lighting and clean sky
       viewer.scene.globe.depthTestAgainstTerrain = false;
-      viewer.scene.globe.enableLighting = true;
+      viewer.scene.globe.enableLighting = false;
       viewer.cesiumWidget.creditContainer.style.display = 'none';
 
       viewerRef.current = viewer;
@@ -52,6 +94,21 @@ export const CesiumViewer = () => {
       }
     };
   }, []);
+
+  // Update map imagery when mapStyle changes
+  const switchMapStyle = (newStyle) => {
+    setMapStyle(newStyle);
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    try {
+      viewer.imageryLayers.removeAll();
+      const provider = createImageryProvider(newStyle);
+      viewer.imageryLayers.add(new Cesium.ImageryLayer(provider));
+    } catch (err) {
+      console.error('Failed to switch imagery layer:', err);
+    }
+  };
 
   // Update Camera, Corridors, and Flood Catchments when selectedCity or telemetry changes
   useEffect(() => {
@@ -78,17 +135,17 @@ export const CesiumViewer = () => {
       name: `${selectedCity.name} Municipal Center`,
       position: Cesium.Cartesian3.fromDegrees(selectedCity.longitude, selectedCity.latitude, 50),
       point: {
-        pixelSize: 12,
+        pixelSize: 14,
         color: Cesium.Color.fromCssColorString('#06B6D4'),
         outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 2
+        outlineWidth: 3
       },
       description: `
         <div style="font-family: sans-serif; padding: 6px;">
-          <h3>${selectedCity.name}</h3>
-          <p>State: ${selectedCity.state}, ${selectedCity.country}</p>
-          <p>Population: ${selectedCity.population?.toLocaleString()}</p>
-          <p>Area: ${selectedCity.area_km2} km²</p>
+          <h3 style="color: #06B6D4; margin-bottom: 4px;">${selectedCity.name}</h3>
+          <p><b>Region:</b> ${selectedCity.state}, ${selectedCity.country}</p>
+          <p><b>Population:</b> ${selectedCity.population?.toLocaleString()}</p>
+          <p><b>Urban Area:</b> ${selectedCity.area_km2} km²</p>
         </div>
       `
     });
@@ -106,16 +163,16 @@ export const CesiumViewer = () => {
       selectedCity.primary_corridors.forEach((corr) => {
         const flatCoords = [];
         corr.coordinates.forEach(([lon, lat]) => {
-          flatCoords.push(lon, lat, 20);
+          flatCoords.push(lon, lat, 25);
         });
 
         viewer.entities.add({
           name: `Arterial Corridor: ${corr.name}`,
           polyline: {
             positions: Cesium.Cartesian3.fromDegreesArrayHeights(flatCoords),
-            width: 7,
+            width: 8,
             material: new Cesium.PolylineGlowMaterialProperty({
-              glowPower: 0.25,
+              glowPower: 0.3,
               taperPower: 1,
               color: corridorColor
             }),
@@ -123,10 +180,11 @@ export const CesiumViewer = () => {
           },
           description: `
             <div style="font-family: sans-serif; padding: 6px;">
-              <h4>${corr.name}</h4>
-              <p>Length: ${corr.length_km} km</p>
-              <p>Traffic Congestion Status: <b>${trafficLevel}</b></p>
-              <p>Capacity: ${corr.capacity_vph} vehicles/hour</p>
+              <h4 style="color: #F8FAFC;">${corr.name}</h4>
+              <p><b>Length:</b> ${corr.length_km} km</p>
+              <p><b>Traffic Congestion:</b> ${trafficLevel}</p>
+              <p><b>Current Speed:</b> ${telemetry?.traffic?.current_speed || 38} km/h</p>
+              <p><b>Capacity:</b> ${corr.capacity_vph} vehicles/hr</p>
             </div>
           `
         });
@@ -155,17 +213,17 @@ export const CesiumViewer = () => {
             hierarchy: Cesium.Cartesian3.fromDegreesArray(flatPoly),
             material: floodColor,
             outline: true,
-            outlineColor: floodColor.withAlpha(0.9),
+            outlineColor: floodColor.withAlpha(0.95),
             outlineWidth: 2,
             height: zone.elevation_meters || 10,
-            extrudedHeight: (zone.elevation_meters || 10) + 15
+            extrudedHeight: (zone.elevation_meters || 10) + 20
           },
           description: `
             <div style="font-family: sans-serif; padding: 6px;">
-              <h4>${zone.name}</h4>
-              <p>Derived Flood Risk: <b>${floodLevel}</b> (Score: ${telemetry?.derived_flood_risk?.score || 0})</p>
-              <p>Catchment Area: ${zone.catchment_area_km2} km²</p>
-              <p>Drainage Capacity: ${zone.drainage_capacity_mmh} mm/h</p>
+              <h4 style="color: #06B6D4;">${zone.name}</h4>
+              <p><b>Derived Flood Risk:</b> ${floodLevel} (Score: ${telemetry?.derived_flood_risk?.score || 0})</p>
+              <p><b>Catchment Drainage Area:</b> ${zone.catchment_area_km2} km²</p>
+              <p><b>Drainage Siphon Capacity:</b> ${zone.drainage_capacity_mmh} mm/h</p>
             </div>
           `
         });
@@ -210,17 +268,17 @@ export const CesiumViewer = () => {
                 <CloudRain size={14} color="#06B6D4" /> Weather:
               </span>
               <span style={{ fontWeight: 600 }}>
-                {telemetry?.weather?.temperature ?? '—'}°C ({telemetry?.weather?.weather_condition ?? 'Normal'})
+                {telemetry?.weather?.temperature != null ? `${telemetry.weather.temperature}°C` : '—'} ({telemetry?.weather?.weather_condition ?? 'Normal'})
               </span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Car size={14} color="#F59E0B" /> Traffic Level:
+                <Car size={14} color="#F59E0B" /> Traffic Flow:
               </span>
               <StatusPill 
                 level={telemetry?.traffic?.traffic_level || 'Low'} 
-                label={`${telemetry?.traffic?.traffic_level || 'Low'} (${telemetry?.traffic?.current_speed || 40} km/h)`}
+                label={`${telemetry?.traffic?.traffic_level || 'Low'} (${telemetry?.traffic?.current_speed || 38} km/h)`}
               />
             </div>
 
@@ -246,10 +304,39 @@ export const CesiumViewer = () => {
           </div>
         </div>
 
-        {/* Legend Panel */}
+        {/* Map Layers & Style Switcher */}
         <div className="twin-hud-panel" style={{ fontSize: '11px' }}>
+          <div style={{ fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Layers size={13} color="#06B6D4" />
+            <span>Map Imagery Style</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '10px' }}>
+            <button
+              className={`btn ${mapStyle === 'street' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '4px 6px', fontSize: '10px' }}
+              onClick={() => switchMapStyle('street')}
+            >
+              Street Map
+            </button>
+            <button
+              className={`btn ${mapStyle === 'satellite' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '4px 6px', fontSize: '10px' }}
+              onClick={() => switchMapStyle('satellite')}
+            >
+              Satellite
+            </button>
+            <button
+              className={`btn ${mapStyle === 'dark' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '4px 6px', fontSize: '10px' }}
+              onClick={() => switchMapStyle('dark')}
+            >
+              Dark Ops
+            </button>
+          </div>
+
           <div style={{ fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
-            Semantic Map Layers
+            Semantic Vector Layers
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, color: 'var(--text-secondary)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -275,7 +362,7 @@ export const CesiumViewer = () => {
           <span>Reset Camera</span>
         </button>
         <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
-          Controls: Left-Click to Pan | Right-Click/Wheel to Zoom | Middle-Click to Tilt/Rotate
+          Controls: Left-Drag to Pan | Scroll to Zoom | Right/Middle-Drag to Tilt & Rotate 3D Globe
         </span>
       </div>
     </div>
