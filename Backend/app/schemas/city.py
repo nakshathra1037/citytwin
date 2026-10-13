@@ -24,6 +24,16 @@ class CityFloodZone(BaseModel):
     catchment_area_km2: float
     drainage_capacity_mmh: float
 
+class CitySensorNode(BaseModel):
+    id: str
+    name: str
+    sensor_type: str # "aqi", "weather", "flood", "traffic"
+    latitude: float
+    longitude: float
+    elevation_meters: float = 30.0
+    status: str = "active"
+    description: Optional[str] = None
+
 class CityMetadata(BaseModel):
     id: str
     name: str
@@ -36,4 +46,5 @@ class CityMetadata(BaseModel):
     area_km2: float
     primary_corridors: List[CityCorridor] = []
     flood_catchments: List[CityFloodZone] = []
+    sensor_nodes: List[CitySensorNode] = []
     timezone: str = "Asia/Kolkata"

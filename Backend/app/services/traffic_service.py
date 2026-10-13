@@ -31,7 +31,7 @@ async def fetch_traffic_data(city_id: str) -> TrafficData:
         
         async with httpx.AsyncClient(timeout=8.0) as client:
             # Query TomTom Flow Segment API for primary corridors
-            for corridor in city.primary_corridors[:4]:
+            for corridor in city.primary_corridors[:10]:
                 if not corridor.coordinates:
                     continue
                 mid_point = corridor.coordinates[len(corridor.coordinates) // 2]

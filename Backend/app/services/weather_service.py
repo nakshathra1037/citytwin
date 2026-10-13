@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import httpx
 from datetime import datetime
 from typing import Optional, Dict, Any
@@ -27,7 +28,7 @@ async def fetch_weather_data(city_id: str) -> WeatherData:
             weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={city.latitude}&lon={city.longitude}&appid={api_key}&units=metric"
             forecast_url = f"https://api.openweathermap.org/data/2.5/forecast?lat={city.latitude}&lon={city.longitude}&appid={api_key}&units=metric"
             
-            w_res, f_res = await httpx.gather(
+            w_res, f_res = await asyncio.gather(
                 client.get(weather_url),
                 client.get(forecast_url),
                 return_exceptions=True

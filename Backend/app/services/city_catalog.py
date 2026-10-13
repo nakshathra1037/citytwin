@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict
-from app.schemas.city import CityMetadata, CameraView, CityCorridor, CityFloodZone
+from app.schemas.city import CityMetadata, CameraView, CityCorridor, CityFloodZone, CitySensorNode
 
 CITIES_REGISTRY: Dict[str, CityMetadata] = {
     "coimbatore": CityMetadata(
@@ -15,7 +15,7 @@ CITIES_REGISTRY: Dict[str, CityMetadata] = {
         camera=CameraView(
             latitude=11.0168,
             longitude=76.9558,
-            height=8500.0,
+            height=12500.0,
             heading=15.0,
             pitch=-48.0,
             roll=0.0
@@ -23,58 +23,105 @@ CITIES_REGISTRY: Dict[str, CityMetadata] = {
         primary_corridors=[
             CityCorridor(
                 id="cbe-avinashi-rd",
-                name="Avinashi Road (NH 544)",
+                name="Avinashi Road (NH 544 Express Corridor)",
                 coordinates=[
-                    [76.9600, 11.0080],
-                    [76.9800, 11.0180],
-                    [77.0100, 11.0300],
-                    [77.0450, 11.0420],
-                    [77.0700, 11.0550]
+                    [76.9630, 11.0120],
+                    [76.9740, 11.0160],
+                    [76.9880, 11.0210],
+                    [77.0020, 11.0260],
+                    [77.0170, 11.0310],
+                    [77.0320, 11.0360],
+                    [77.0480, 11.0420],
+                    [77.0650, 11.0490],
+                    [77.0820, 11.0560]
                 ],
                 length_km=14.2,
-                capacity_vph=4500
+                capacity_vph=4800
             ),
             CityCorridor(
                 id="cbe-trichy-rd",
-                name="Trichy Road (SH 172)",
+                name="Trichy Road (SH 172 Arterial)",
                 coordinates=[
-                    [76.9650, 11.0010],
-                    [76.9850, 11.0000],
-                    [77.0200, 10.9980],
-                    [77.0550, 10.9920]
+                    [76.9630, 10.9990],
+                    [76.9740, 10.9980],
+                    [76.9890, 10.9970],
+                    [77.0050, 10.9970],
+                    [77.0220, 10.9960],
+                    [77.0420, 10.9940],
+                    [77.0600, 10.9910]
                 ],
                 length_km=11.8,
-                capacity_vph=3800
+                capacity_vph=3900
             ),
             CityCorridor(
                 id="cbe-sathy-rd",
-                name="Sathy Road (NH 209)",
+                name="Sathy Road (NH 209 IT & Academic Corridor)",
                 coordinates=[
                     [76.9680, 11.0150],
-                    [76.9800, 11.0400],
-                    [76.9950, 11.0750],
-                    [77.0100, 11.1000]
+                    [76.9730, 11.0260],
+                    [76.9790, 11.0420],
+                    [76.9850, 11.0580],
+                    [76.9920, 11.0760],
+                    [77.0010, 11.0950],
+                    [77.0120, 11.1150]
                 ],
                 length_km=12.5,
-                capacity_vph=3200
+                capacity_vph=3400
             ),
             CityCorridor(
                 id="cbe-mettupalayam-rd",
                 name="Mettupalayam Road (NH 181)",
                 coordinates=[
-                    [76.9550, 11.0100],
-                    [76.9450, 11.0350],
-                    [76.9380, 11.0700],
-                    [76.9300, 11.1100]
+                    [76.9560, 11.0120],
+                    [76.9530, 11.0250],
+                    [76.9490, 11.0420],
+                    [76.9430, 11.0620],
+                    [76.9380, 11.0820],
+                    [76.9320, 11.1050]
                 ],
                 length_km=13.0,
-                capacity_vph=3500
+                capacity_vph=3600
+            ),
+            CityCorridor(
+                id="cbe-pollachi-rd",
+                name="Pollachi Road (NH 83 South Axis)",
+                coordinates=[
+                    [76.9590, 10.9920],
+                    [76.9600, 10.9780],
+                    [76.9620, 10.9610],
+                    [76.9630, 10.9450],
+                    [76.9650, 10.9250]
+                ],
+                length_km=10.5,
+                capacity_vph=3200
+            ),
+            CityCorridor(
+                id="cbe-100ft-link",
+                name="100 Feet Cross Corridor (Gandhipuram - Tatabad)",
+                coordinates=[
+                    [76.9550, 11.0180],
+                    [76.9640, 11.0190],
+                    [76.9730, 11.0200]
+                ],
+                length_km=3.2,
+                capacity_vph=2800
+            ),
+            CityCorridor(
+                id="cbe-peelamedu-singanallur-link",
+                name="Hope College - Singanallur Link Axis",
+                coordinates=[
+                    [77.0170, 11.0310],
+                    [77.0190, 11.0150],
+                    [77.0220, 10.9960]
+                ],
+                length_km=4.8,
+                capacity_vph=2600
             )
         ],
         flood_catchments=[
             CityFloodZone(
                 id="cbe-valankulam",
-                name="Valankulam Catchment & Low Basin",
+                name="Valankulam Urban Wetland Catchment",
                 polygon=[
                     [76.9650, 10.9950],
                     [76.9750, 10.9950],
@@ -88,7 +135,7 @@ CITIES_REGISTRY: Dict[str, CityMetadata] = {
             ),
             CityFloodZone(
                 id="cbe-singanallur",
-                name="Singanallur Wetland Drainage Zone",
+                name="Singanallur Lake Drainage Basin",
                 polygon=[
                     [77.0180, 10.9900],
                     [77.0350, 10.9920],
@@ -102,7 +149,7 @@ CITIES_REGISTRY: Dict[str, CityMetadata] = {
             ),
             CityFloodZone(
                 id="cbe-noyyal-basin",
-                name="Noyyal River Southern Floodplain",
+                name="Noyyal River Southern Floodplain Corridor",
                 polygon=[
                     [76.9400, 10.9750],
                     [76.9800, 10.9800],
@@ -114,6 +161,98 @@ CITIES_REGISTRY: Dict[str, CityMetadata] = {
                 elevation_meters=402.0,
                 catchment_area_km2=18.5,
                 drainage_capacity_mmh=32.0
+            )
+        ],
+        sensor_nodes=[
+            CitySensorNode(
+                id="cbe-aqi-gandhipuram",
+                name="CPCB AQI Station - Gandhipuram",
+                sensor_type="aqi",
+                latitude=11.0175,
+                longitude=76.9680,
+                elevation_meters=418.0,
+                description="Central Continuous Ambient Air Quality Monitoring Station"
+            ),
+            CitySensorNode(
+                id="cbe-aqi-peelamedu",
+                name="Urban AQI Sensor - Peelamedu",
+                sensor_type="aqi",
+                latitude=11.0265,
+                longitude=77.0040,
+                elevation_meters=422.0,
+                description="Educational & Commercial Zone Micro-climate Air Monitor"
+            ),
+            CitySensorNode(
+                id="cbe-aqi-sidco",
+                name="SIDCO Industrial AQI Unit - Kurichi",
+                sensor_type="aqi",
+                latitude=10.9550,
+                longitude=76.9620,
+                elevation_meters=405.0,
+                description="Southern Manufacturing & Industrial Ambient Air Monitor"
+            ),
+            CitySensorNode(
+                id="cbe-weather-airport",
+                name="IMD Automated Weather Station - CJB Airport",
+                sensor_type="weather",
+                latitude=11.0300,
+                longitude=77.0434,
+                elevation_meters=426.0,
+                description="Civil Aviation Meteorological Radar & Telemetry Tower"
+            ),
+            CitySensorNode(
+                id="cbe-weather-tnau",
+                name="Agro-Meteorological AWS - TNAU",
+                sensor_type="weather",
+                latitude=11.0125,
+                longitude=76.9350,
+                elevation_meters=420.0,
+                description="Western Suburban Atmospheric & Solar Radiation Sensor"
+            ),
+            CitySensorNode(
+                id="cbe-flood-valankulam",
+                name="Valankulam Siphon Water Gauge",
+                sensor_type="flood",
+                latitude=11.0010,
+                longitude=76.9720,
+                elevation_meters=411.0,
+                description="Lake Water Depth Ultrasonic Gauge & Siphon Telemetry"
+            ),
+            CitySensorNode(
+                id="cbe-flood-singanallur",
+                name="Singanallur Wetland Discharge Weir",
+                sensor_type="flood",
+                latitude=10.9990,
+                longitude=77.0260,
+                elevation_meters=408.0,
+                description="Inflow Velocity & Siltation Hydrological Sensor"
+            ),
+            CitySensorNode(
+                id="cbe-traffic-gandhipuram",
+                name="Gandhipuram Bus Stand Flow Camera",
+                sensor_type="traffic",
+                latitude=11.0150,
+                longitude=76.9660,
+                elevation_meters=415.0,
+                description="AI Junction Camera with Real-Time Vehicle Classification"
+            ),
+            CitySensorNode(
+                id="cbe-traffic-lakshmi-mills",
+                name="Lakshmi Mills Flyover Surveillance Node",
+                sensor_type="traffic",
+                latitude=11.0210,
+                longitude=76.9880,
+                elevation_meters=420.0,
+                description="Avinashi Road Multi-Tier Flow Radar"
+            ),
+            CitySensorNode(
+                id="cbe-traffic-hope-college",
+                name="Hope College Cross Traffic Sensor",
+                sensor_type="traffic",
+                latitude=11.0310,
+                longitude=77.0170,
+                elevation_meters=424.0,
+                description="High-Speed Corridor Ingress & Congestion Detector"
             )
         ]
     ),
